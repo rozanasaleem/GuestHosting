@@ -30,6 +30,11 @@ def clean(value: object) -> str:
     return str(value or "").strip()
 
 
+def has_visible_name(value: object) -> bool:
+    name = clean(value)
+    return bool(name and name.upper() not in {"EMPTY", "NULL"})
+
+
 def has_supabase() -> bool:
     return bool(SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY)
 
@@ -135,9 +140,13 @@ def sqlite_row_to_guest(row: sqlite3.Row) -> dict:
 def sqlite_get_state() -> dict:
     init_db()
     with connect() as con:
-        guests = [sqlite_row_to_guest(row) for row in con.execute("SELECT * FROM guests ORDER BY source DESC, name COLLATE NOCASE")]
+        guests = [
+            guest
+            for guest in (sqlite_row_to_guest(row) for row in con.execute("SELECT * FROM guests ORDER BY source DESC, name COLLATE NOCASE"))
+            if has_visible_name(guest.get("name"))
+        ]
         fields = [dict(row) for row in con.execute("SELECT key, label FROM custom_fields ORDER BY created_at")]
-        source_count = con.execute("SELECT COUNT(*) FROM guests WHERE source = 'original'").fetchone()[0]
+        source_count = sum(1 for guest in guests if guest.get("source") == "original")
     return {"sourceCount": source_count, "count": len(guests), "guests": guests, "customFields": fields, "backend": "sqlite"}
 
 
@@ -320,7 +329,7 @@ def supabase_get_state() -> dict:
         fields_rows = supabase_select_all(SUPABASE_FIELDS_TABLE, "key,label", "created_at.asc")
     except RuntimeError:
         fields_rows = []
-    guests = [supabase_row_to_guest(row) for row in guests_rows]
+    guests = [guest for guest in (supabase_row_to_guest(row) for row in guests_rows) if has_visible_name(guest.get("name"))]
     source_count = sum(1 for guest in guests if guest.get("source") == "original") or len(guests)
     return {"sourceCount": source_count, "count": len(guests), "guests": guests, "customFields": fields_rows, "backend": "supabase"}
 

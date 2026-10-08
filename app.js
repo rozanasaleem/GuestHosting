@@ -104,6 +104,11 @@ function clean(value) {
   return String(value || "").trim();
 }
 
+function hasVisibleName(value) {
+  const name = clean(value);
+  return Boolean(name && !["EMPTY", "NULL"].includes(name.toUpperCase()));
+}
+
 function normalize(value) {
   return String(value || "")
     .toLowerCase()
@@ -280,7 +285,7 @@ function matchesFilters(guest) {
 }
 
 function filteredGuests() {
-  const rows = guests.filter(matchesFilters).map((guest) => ({ guest, score: scoreGuest(guest) }));
+  const rows = guests.filter((guest) => hasVisibleName(guest.name)).filter(matchesFilters).map((guest) => ({ guest, score: scoreGuest(guest) }));
 
   rows.sort((a, b) => {
     if (state.sort === "name") return a.guest.name.localeCompare(b.guest.name, "ar");
