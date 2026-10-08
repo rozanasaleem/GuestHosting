@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>دليل الضيوف</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23152533'/%3E%3Ccircle cx='23' cy='23' r='9' fill='%23f2c14e'/%3E%3Cpath d='M16 45c2.8-8 11.2-11.6 18.6-7.8M39 17h10M39 29h13M39 41h8' stroke='%23f4f1ea' stroke-width='5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="panel filters">
+        <div class="brand">
+          <span class="mark" aria-hidden="true"></span>
+          <div>
+            <h1>دليل الضيوف</h1>
+            <p id="source-count">تحميل البيانات...</p>
+          </div>
+        </div>
+
+        <label class="field">
+          <span>بحث شامل</span>
+          <input id="search-input" type="search" autocomplete="off" placeholder="اسم، مجال، منطقة، هاتف..." dir="rtl" />
+        </label>
+
+        <div class="mode-row" aria-label="طريقة مطابقة الفلاتر">
+          <button class="mode-button active" data-match="any" type="button">أي فلتر</button>
+          <button class="mode-button" data-match="all" type="button">كل الفلاتر</button>
+        </div>
+
+        <details class="filter-group dropdown-filter">
+          <summary>
+            <span>
+              <strong>المجالات</strong>
+              <small id="tag-summary">اختر مجالاً</small>
+            </span>
+            <span class="chevron" aria-hidden="true">⌄</span>
+          </summary>
+          <div class="dropdown-body">
+            <div class="group-head">
+              <h2>المجالات</h2>
+              <button id="clear-tags" type="button">مسح</button>
+            </div>
+            <div id="tag-options" class="option-list"></div>
+          </div>
+        </details>
+
+        <details class="filter-group dropdown-filter">
+          <summary>
+            <span>
+              <strong>المناطق</strong>
+              <small id="region-summary">اختر منطقة</small>
+            </span>
+            <span class="chevron" aria-hidden="true">⌄</span>
+          </summary>
+          <div class="dropdown-body">
+            <div class="group-head">
+              <h2>المناطق</h2>
+              <button id="clear-regions" type="button">مسح</button>
+            </div>
+            <div id="region-options" class="option-list compact"></div>
+          </div>
+        </details>
+      </aside>
+
+      <main class="workspace">
+        <section class="toolbar">
+          <div>
+            <p class="eyebrow">قاعدة بيانات خاصة</p>
+            <h2 id="result-title">كل الضيوف</h2>
+          </div>
+          <div class="actions">
+            <button id="add-guest" class="secondary" type="button">إضافة ضيف</button>
+            <button id="add-field" class="secondary" type="button">إضافة حقل</button>
+            <button id="clear-all" class="secondary" type="button">تنظيف البحث</button>
+            <button id="export-csv" type="button">تصدير النتائج</button>
+          </div>
+        </section>
+
+        <section class="stats" aria-label="إحصائيات النتائج">
+          <article>
+            <span id="stat-results">0</span>
+            <p>نتيجة مطابقة</p>
+          </article>
+          <article>
+            <span id="stat-with-phone">0</span>
+            <p>مع رقم هاتف</p>
+          </article>
+          <article>
+            <span id="stat-categories">0</span>
+            <p>مجال ظاهر</p>
+          </article>
+          <article>
+            <span id="stat-regions">0</span>
+            <p>منطقة ظاهرة</p>
+          </article>
+        </section>
+
+        <section id="common-panel" class="common-panel hidden">
+          <div>
+            <h3>القاسم المشترك</h3>
+            <p id="common-copy"></p>
+          </div>
+          <div id="common-tags" class="chips"></div>
+        </section>
+
+        <section class="content-grid">
+          <div class="results-panel">
+            <div class="result-head">
+              <h3>الضيوف</h3>
+              <select id="sort-select" aria-label="ترتيب النتائج">
+                <option value="relevance">الأقرب للبحث</option>
+                <option value="name">الاسم</option>
+                <option value="category">المجال</option>
+                <option value="region">المنطقة</option>
+              </select>
+            </div>
+            <div id="guest-list" class="guest-list"></div>
+          </div>
+
+          <aside id="detail-panel" class="panel detail">
+            <div class="empty-detail">
+              <h3>اختر ضيفاً</h3>
+              <p>ستظهر هنا معلومات الاتصال، المجالات المشتركة، الملاحظات، وحالة التواصل.</p>
+            </div>
+          </aside>
+        </section>
+      </main>
+    </div>
+
+    <script src="data/guests-data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

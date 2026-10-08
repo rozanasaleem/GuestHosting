@@ -1,0 +1,4 @@
+guests.db
+__pycache__/
+.git/
+.DS_Store
