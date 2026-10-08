@@ -13,10 +13,7 @@ from urllib.error import HTTPError
 from urllib.parse import quote, unquote, urlparse
 from urllib.request import Request, urlopen
 
-try:
-    from flask import Flask, jsonify, request, send_from_directory
-except ImportError:  # pragma: no cover - local setup helper
-    Flask = None
+from flask import Flask, jsonify, request, send_from_directory
 
 ROOT = Path(__file__).resolve().parent
 DB_PATH = Path(os.environ.get("GUEST_DB_PATH", str(ROOT / "guests.db"))).expanduser()
@@ -418,51 +415,57 @@ def create_field(payload: dict) -> dict:
     return sqlite_create_field(payload)
 
 
-if Flask is not None:
-    app = Flask(__name__, static_folder=None)
+app = Flask(__name__, static_folder=None)
 
-    @app.get("/api/health")
-    def health():
-        return jsonify({"ok": True, "backend": "supabase" if has_supabase() else "sqlite"})
 
-    @app.get("/api/state")
-    def api_state():
-        return jsonify(get_state())
+@app.get("/api/health")
+def health():
+    return jsonify({"ok": True, "backend": "supabase" if has_supabase() else "sqlite"})
 
-    @app.post("/api/guests")
-    def api_create_guest():
-        try:
-            return jsonify(create_guest(request.get_json(silent=True) or {})), HTTPStatus.CREATED
-        except Exception as exc:
-            return jsonify({"error": str(exc)}), HTTPStatus.BAD_REQUEST
 
-    @app.post("/api/fields")
-    def api_create_field():
-        try:
-            return jsonify(create_field(request.get_json(silent=True) or {})), HTTPStatus.CREATED
-        except Exception as exc:
-            return jsonify({"error": str(exc)}), HTTPStatus.BAD_REQUEST
+@app.get("/api/state")
+def api_state():
+    return jsonify(get_state())
 
-    @app.put("/api/guests/<path:guest_id>")
-    def api_save_guest(guest_id: str):
-        try:
-            return jsonify(save_guest(unquote(guest_id), request.get_json(silent=True) or {}))
-        except KeyError:
-            return jsonify({"error": "Guest not found"}), HTTPStatus.NOT_FOUND
-        except Exception as exc:
-            return jsonify({"error": str(exc)}), HTTPStatus.BAD_REQUEST
 
-    @app.get("/")
-    def home():
+@app.post("/api/guests")
+def api_create_guest():
+    try:
+        return jsonify(create_guest(request.get_json(silent=True) or {})), HTTPStatus.CREATED
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), HTTPStatus.BAD_REQUEST
+
+
+@app.post("/api/fields")
+def api_create_field():
+    try:
+        return jsonify(create_field(request.get_json(silent=True) or {})), HTTPStatus.CREATED
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), HTTPStatus.BAD_REQUEST
+
+
+@app.put("/api/guests/<path:guest_id>")
+def api_save_guest(guest_id: str):
+    try:
+        return jsonify(save_guest(unquote(guest_id), request.get_json(silent=True) or {}))
+    except KeyError:
+        return jsonify({"error": "Guest not found"}), HTTPStatus.NOT_FOUND
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), HTTPStatus.BAD_REQUEST
+
+
+@app.get("/")
+def home():
+    return send_from_directory(ROOT, "index.html")
+
+
+@app.get("/<path:path>")
+def static_files(path: str):
+    parsed = urlparse(path).path
+    target = (ROOT / parsed).resolve()
+    if not str(target).startswith(str(ROOT.resolve())) or not target.is_file():
         return send_from_directory(ROOT, "index.html")
-
-    @app.get("/<path:path>")
-    def static_files(path: str):
-        parsed = urlparse(path).path
-        target = (ROOT / parsed).resolve()
-        if not str(target).startswith(str(ROOT.resolve())) or not target.is_file():
-            return send_from_directory(ROOT, "index.html")
-        return send_from_directory(target.parent, target.name)
+    return send_from_directory(target.parent, target.name)
 
 
 def main() -> None:
@@ -477,8 +480,6 @@ def main() -> None:
         print(f"Database ready: {DB_PATH}")
         return
 
-    if Flask is None:
-        raise RuntimeError("Flask is required. Install dependencies with: pip install -r requirements.txt")
     app.run(host=args.host, port=args.port)
 
 
