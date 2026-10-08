@@ -8,12 +8,15 @@ const state = {
   editMode: false,
   dbOnline: false,
   backend: "local",
+  visibleRows: 80,
 };
 
 let guests = [];
 let customFields = [];
 let sourceCount = 0;
 const LOCAL_STORE_KEY = "guest-directory-local-state-v1";
+const INITIAL_VISIBLE_ROWS = 80;
+const LOAD_MORE_ROWS = 20;
 
 const els = {
   sourceCount: document.querySelector("#source-count"),
@@ -347,8 +350,9 @@ function renderList(rows) {
     return;
   }
 
+  const visibleCount = Math.min(state.visibleRows, rows.length);
   els.list.innerHTML = rows
-    .slice(0, 500)
+    .slice(0, visibleCount)
     .map((guest) => {
       const tags = (guest.tags || []).slice(0, 4).map((tag) => `<span class="chip">${escapeHtml(tag)}</span>`).join("");
       const region = guest.region ? `<span class="chip region">${escapeHtml(guest.region)}</span>` : "";
@@ -366,7 +370,21 @@ function renderList(rows) {
         </button>
       `;
     })
-    .join("");
+    .join("") +
+    (visibleCount < rows.length
+      ? `<div class="load-more-hint">${visibleCount.toLocaleString("ar")} من ${rows.length.toLocaleString("ar")} · مرّر لعرض المزيد</div>`
+      : "");
+}
+
+function resetVisibleRows() {
+  state.visibleRows = INITIAL_VISIBLE_ROWS;
+}
+
+function showMoreRows() {
+  const rows = filteredGuests();
+  if (state.visibleRows >= rows.length) return;
+  state.visibleRows = Math.min(state.visibleRows + LOAD_MORE_ROWS, rows.length);
+  renderList(rows);
 }
 
 function renderDetail(guest) {
@@ -648,6 +666,7 @@ async function saveGuestForm(form) {
 function wireEvents() {
   els.search.addEventListener("input", (event) => {
     state.search = event.target.value.trim();
+    resetVisibleRows();
     render();
   });
 
@@ -663,10 +682,12 @@ function wireEvents() {
     const target = event.target;
     if (target.matches("input[type='checkbox'][data-type='tag']")) {
       target.checked ? state.tags.add(target.value) : state.tags.delete(target.value);
+      resetVisibleRows();
       render();
     }
     if (target.matches("input[type='checkbox'][data-type='region']")) {
       target.checked ? state.regions.add(target.value) : state.regions.delete(target.value);
+      resetVisibleRows();
       render();
     }
     if (target.id === "guest-status" && state.selectedId) {
@@ -706,16 +727,19 @@ function wireEvents() {
 
   els.sort.addEventListener("change", (event) => {
     state.sort = event.target.value;
+    resetVisibleRows();
     render();
   });
 
   document.querySelector("#clear-tags").addEventListener("click", () => {
     state.tags.clear();
+    resetVisibleRows();
     render();
   });
 
   document.querySelector("#clear-regions").addEventListener("click", () => {
     state.regions.clear();
+    resetVisibleRows();
     render();
   });
 
@@ -724,12 +748,18 @@ function wireEvents() {
     state.tags.clear();
     state.regions.clear();
     els.search.value = "";
+    resetVisibleRows();
     render();
   });
 
   document.querySelector("#add-guest").addEventListener("click", () => addGuest().catch(alert));
   document.querySelector("#add-field").addEventListener("click", () => addCustomField().catch(alert));
   document.querySelector("#export-csv").addEventListener("click", exportCsv);
+
+  els.list.addEventListener("scroll", () => {
+    const distanceFromBottom = els.list.scrollHeight - els.list.scrollTop - els.list.clientHeight;
+    if (distanceFromBottom < 160) showMoreRows();
+  });
 }
 
 async function init() {

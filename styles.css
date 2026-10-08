@@ -427,6 +427,14 @@ button.secondary,
   box-shadow: inset -4px 0 0 var(--teal);
 }
 
+.load-more-hint {
+  background: #fff;
+  color: var(--muted);
+  font-size: 0.9rem;
+  padding: 13px 14px;
+  text-align: center;
+}
+
 .guest-name {
   font-weight: 700;
   font-size: 1.04rem;
